@@ -29,15 +29,6 @@ source venv/bin/activate  # or `venv\Scripts\activate` on Windows
 pip install -r requirements.txt
 ```
 
-Create `requirements.txt` with:
-
-```
-opencv-python
-pytesseract
-Pillow
-piexif
-```
-
 ---
 
 ### 2. Tesseract OCR
