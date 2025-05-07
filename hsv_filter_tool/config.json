@@ -1,0 +1,20 @@
+{
+  "hue_range": {
+    "min": 267,
+    "max": 345
+  },
+  "saturation_range": {
+    "min": 3,
+    "max": 100
+  },
+  "value_range": {
+    "min": 12,
+    "max": 100
+  },
+  "crop": {
+    "left": 72,
+    "right": 100,
+    "top": 80,
+    "bottom": 100
+  }
+}
