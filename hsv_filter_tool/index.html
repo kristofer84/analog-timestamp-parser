@@ -10,7 +10,29 @@
   <body>
     <center><h1>HSV Filter Tool</h1></center>
     <br />
-    <div fr>
+    <div class="controls">
+      <label
+        >Hue Range
+        <div id="hueSlider" class="slider hue-bg"></div
+      ></label>
+      <label
+        >Saturation Range
+        <div id="satSlider" class="slider"></div
+      ></label>
+      <label
+        >Value Range
+        <div id="valSlider" class="slider"></div
+      ></label>
+      <label
+        >Crop Left-Right (%)
+        <div id="cropLRSlider" class="slider"></div
+      ></label>
+      <label
+        >Crop Top-Bottom (%)
+        <div id="cropTBSlider" class="slider"></div
+      ></label>
+    </div><div fr>
+    
       <div fc>
         <label
           >Select images<br />
@@ -25,28 +47,6 @@
         <span>
           <button id="exportJson">Export JSON</button>
         </span>
-      </div>
-      <div class="controls">
-        <label
-          >Hue Range
-          <div id="hueSlider" class="slider hue-bg"></div
-        ></label>
-        <label
-          >Saturation Range
-          <div id="satSlider" class="slider"></div
-        ></label>
-        <label
-          >Value Range
-          <div id="valSlider" class="slider"></div
-        ></label>
-        <label
-          >Crop Left-Right (%)
-          <div id="cropLRSlider" class="slider"></div
-        ></label>
-        <label
-          >Crop Top-Bottom (%)
-          <div id="cropTBSlider" class="slider"></div
-        ></label>
       </div>
       <textarea id="jsonOutput" placeholder="HSV filter values in JSON format..."></textarea>
     </div>
