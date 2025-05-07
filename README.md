@@ -84,7 +84,7 @@ Creates `output.json`.
 - Upload:
   - Images
   - `output.json`
-- Tune HSV/crop or correct dates manually.
+- Correct dates manually.
 - Click **Export JSON** to download updated metadata.
 
 ### Step 3: Update EXIF Dates
@@ -102,17 +102,17 @@ Optional: `--dry-run` to preview changes.
 ```
 .
 ├── dates_to_json.py
-├── update_files.py
 ├── hsv_filter_tool/
+│   ├── config.json
 │   ├── index.html
 │   ├── script.js
-│   ├── style.css
-│   └── config.json
-└── output.json
+│   └── style.css
+├── requirements.txt
+└── update_files.py
 ```
 
 ---
 
 ## 📖 License
 
-MIT or similar — you decide.
+MIT
