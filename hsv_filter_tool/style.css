@@ -1,6 +1,5 @@
-
 body {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Segoe UI", sans-serif;
   margin: 20px;
   background: #f5f5fa;
   color: #333;
@@ -8,6 +7,31 @@ body {
 h1 {
   font-size: 24px;
 }
+
+.hue-bg .noUi-connects {
+  background: linear-gradient(to right, red, yellow, lime, cyan, blue, magenta, red);
+  mask-image: linear-gradient(to right, black, black); /* default full visible */
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+}
+
+div[fr] {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+  justify-content: center;
+}
+
+div[fc] {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  justify-content: center;
+}
+
+/* .noUi-connect {
+  background: rgba(0, 0, 0, 0) !important;
+} */
 .flex-top {
   display: flex;
   flex-wrap: wrap;
@@ -15,17 +39,24 @@ h1 {
   align-items: flex-start;
 }
 .controls {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
   gap: 10px;
   max-width: 600px;
+  min-width: 400px;
+  margin: 50px;
 }
 .controls label {
   display: flex;
   flex-direction: column;
   font-size: 13px;
 }
-.image-grid, .image-list {
+.image-grid,
+.image-list {
   margin-top: 20px;
   display: flex;
   flex-wrap: wrap;
@@ -39,7 +70,8 @@ canvas {
   border-radius: 8px;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
 }
-.image-grid > div, .image-list > div {
+.image-grid > div,
+.image-list > div {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -66,4 +98,8 @@ button {
   padding: 6px 12px;
   font-size: 14px;
   cursor: pointer;
+}
+#jsonOutput {
+  height: 320px;
+  width: 200px;
 }

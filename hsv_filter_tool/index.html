@@ -5,29 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HSV Filter Tool</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.css" />
   </head>
   <body>
-    <h1>HSV Filter Tool</h1>
-    <input type="file" id="imageInput" multiple accept="image/*" />
-    <input type="file" id="jsonInput" accept="application/json" />
-    <button id="toggleView">Toggle View</button>
-    <button id="exportJson">Export JSON</button>
-    <div class="flex-top">
+    <center><h1>HSV Filter Tool</h1></center>
+    <br />
+    <div fr>
+      <div fc>
+        <label
+          >Select images<br />
+          <input type="file" id="imageInput" multiple accept="image/*" /> </label
+        ><label
+          >Select JSON-file<br />
+          <input type="file" id="jsonInput" accept="application/json" />
+        </label>
+        <span>
+          <button id="toggleView">Toggle View</button>
+        </span>
+        <span>
+          <button id="exportJson">Export JSON</button>
+        </span>
+      </div>
       <div class="controls">
-        <label>Hue Min <input type="range" id="hMin" min="0" max="360" /></label>
-        <label>Hue Max <input type="range" id="hMax" min="0" max="360" /></label>
-        <label>Sat Min <input type="range" id="sMin" min="0" max="100" /></label>
-        <label>Sat Max <input type="range" id="sMax" min="0" max="100" /></label>
-        <label>Val Min <input type="range" id="vMin" min="0" max="100" /></label>
-        <label>Val Max <input type="range" id="vMax" min="0" max="100" /></label>
-        <label>Crop Left (%) <input type="range" id="cropLeft" min="0" max="100" /></label>
-        <label>Crop Right (%) <input type="range" id="cropRight" min="0" max="100" /></label>
-        <label>Crop Top (%) <input type="range" id="cropTop" min="0" max="100" /></label>
-        <label>Crop Bottom (%) <input type="range" id="cropBottom" min="0" max="100" /></label>
+        <label
+          >Hue Range
+          <div id="hueSlider" class="slider hue-bg"></div
+        ></label>
+        <label
+          >Saturation Range
+          <div id="satSlider" class="slider"></div
+        ></label>
+        <label
+          >Value Range
+          <div id="valSlider" class="slider"></div
+        ></label>
+        <label
+          >Crop Left-Right (%)
+          <div id="cropLRSlider" class="slider"></div
+        ></label>
+        <label
+          >Crop Top-Bottom (%)
+          <div id="cropTBSlider" class="slider"></div
+        ></label>
       </div>
       <textarea id="jsonOutput" placeholder="HSV filter values in JSON format..."></textarea>
     </div>
     <div id="imageGrid" class="image-grid"></div>
+    <script src="https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
