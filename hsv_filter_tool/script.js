@@ -52,7 +52,9 @@ noUiSlider.create(cropLRSlider, {
 noUiSlider.create(cropTBSlider, {
   start: [80, 100], step: 1,
   range: { min: 0, max: 100 },
-  connect: true, tooltips: true
+  connect: true, tooltips: true,
+  // orientation: 'vertical',
+  // height: '400px'
 });
 
 function formatDisplay(val) {
@@ -109,8 +111,9 @@ async function applyFilter(canvas, ctx, img) {
 
   canvas.width = cropWidth * scale;
   canvas.height = cropHeight * scale;
-
+  
   ctx.drawImage(img, xStart, yStart, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+
   let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
   const originalData = new Uint8ClampedArray(imageData.data);
@@ -173,6 +176,8 @@ function renderImage(file) {
     const img = new Image();
     img.onload = async () => {
       const container = document.createElement('div');
+      if (isListView)
+        container.classList.add('image-container');
       const canvas = document.createElement('canvas');
       canvas.dataset.source = img.src;
       container.appendChild(canvas);
@@ -181,6 +186,11 @@ function renderImage(file) {
       await applyFilter(canvas, ctx, img);
 
       if (isListView) {
+
+        const title = document.createElement('span');
+        title.innerText = file.name;
+        container.appendChild(title);
+
         const input = document.createElement('input');
         input.type = 'text';
         input.placeholder = 'yyyy-MM-dd';
@@ -206,9 +216,6 @@ function renderImage(file) {
         container.appendChild(input);
       }
 
-      const title = document.createElement('span');
-      title.innerText = file.name;
-      container.appendChild(title);
       imageGrid.appendChild(container);
 
       canvas.addEventListener('mouseenter', () => {
@@ -275,27 +282,40 @@ async function onSlidersUpdate() {
     window.sliderTimer = setTimeout(onSlidersUpdate, 200);
   });
 });
-
-[hueInvert, satInvert, valInvert].forEach(cb => {
-  cb.addEventListener('change', () => {
-    clearTimeout(window.sliderTimer);
-    window.sliderTimer = setTimeout(onSlidersUpdate, 200);
-  });
-});
-
-hueSlider.noUiSlider.on('update', (values) => {
-  const [start, end] = values.map(Number);
+function updateHueMask() {
+  const [start, end] = hueSlider.noUiSlider.get().map(Number);
   const startPct = (start / 360) * 100;
   const endPct = (end / 360) * 100;
 
   const connect = hueSlider.querySelector('.noUi-connects');
 
-  connect.style.maskImage = `linear-gradient(to right, 
-    transparent ${startPct}%, 
-    black ${startPct}%, 
-    black ${endPct}%, 
-    transparent ${endPct}%)`;
+  if (hueInvert.checked) {
+    connect.style.maskImage = `linear-gradient(to right, 
+      black ${startPct}%, 
+      transparent ${startPct}%, 
+      transparent ${endPct}%, 
+      black ${endPct}%)`;
+  } else {
+    connect.style.maskImage = `linear-gradient(to right, 
+      transparent ${startPct}%, 
+      black ${startPct}%, 
+      black ${endPct}%, 
+      transparent ${endPct}%)`;
+  }
+}
+
+// Attach event listeners
+[hueInvert, satInvert, valInvert].forEach(cb => {
+  cb.addEventListener('change', () => {
+    clearTimeout(window.sliderTimer);
+    window.sliderTimer = setTimeout(onSlidersUpdate, 200);
+
+    if (cb === hueInvert) updateHueMask(); // Update mask immediately
+  });
 });
+
+hueSlider.noUiSlider.on('update', updateHueMask);
+
 
 // === Extra Event Bindings ===
 toggleViewBtn.addEventListener('click', () => {

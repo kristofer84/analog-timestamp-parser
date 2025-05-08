@@ -8,53 +8,61 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.css" />
   </head>
   <body>
+    <div class="controls">
+      <div fr style="gap: 50px;">
+        <div style="flex-grow: 1;">
+          <label
+            >Hue Range
+            <div id="hueSlider" class="slider hue-bg"></div
+          ></label>
+          <label
+            >Saturation Range
+            <div id="satSlider" class="slider"></div>
+          </label>
+          <label
+            >Value Range
+            <div id="valSlider" class="slider"></div>
+          </label>
+          <label
+            >Crop Left-Right (%)
+            <div id="cropLRSlider" class="slider"></div
+          ></label>
+          <label
+            >Crop Top-Bottom (%)
+            <div id="cropTBSlider" class="slider"></div
+          ></label>
+          <div>
+            <label>Invert</label>
+            <input type="checkbox" id="hueInvert" /><span>Hue</span> <input type="checkbox" id="satInvert" /><span>Saturation</span> <input type="checkbox" id="valInvert" /><span>Value</span>
+          </div>
+        </div>
+        <div fc style="width: 185px;">
+          <div>
+            <label
+              >Select images<br />
+              <input type="file" id="imageInput" multiple accept="image/*" />
+            </label>
+          </div>
+          <div>
+            <label
+              >Select JSON-file<br />
+              <input type="file" id="jsonInput" accept="application/json" />
+            </label>
+          </div>
+          <span>
+            <button id="toggleView">Toggle View</button>
+          </span>
+          <span>
+            <button id="exportJson">Export JSON</button>
+          </span>
+        </div>
+        <div>
+          <textarea id="jsonOutput" placeholder="HSV filter values in JSON format..."></textarea>
+        </div>
+      </div>
+    </div>
     <center><h1>HSV Filter Tool</h1></center>
     <br />
-    <div class="controls">
-      <label
-        >Hue Range
-        <div id="hueSlider" class="slider hue-bg"></div
-      ></label>
-      <label
-        >Saturation Range
-        <div id="satSlider" class="slider"></div>
-      </label>
-      <label
-        >Value Range
-        <div id="valSlider" class="slider"></div>
-      </label>
-      <label
-        >Crop Left-Right (%)
-        <div id="cropLRSlider" class="slider"></div
-      ></label>
-      <label
-        >Crop Top-Bottom (%)
-        <div id="cropTBSlider" class="slider"></div
-      ></label>
-      <div>
-        <label>Invert</label>
-        <input type="checkbox" id="hueInvert" /><span>Hue</span>
-        <input type="checkbox" id="satInvert" /><span>Saturation</span>
-        <input type="checkbox" id="valInvert" /><span>Value</span></div>
-    </div>
-    <div fr>
-      <div fc>
-        <label
-          >Select images<br />
-          <input type="file" id="imageInput" multiple accept="image/*" /> </label
-        ><label
-          >Select JSON-file<br />
-          <input type="file" id="jsonInput" accept="application/json" />
-        </label>
-        <span>
-          <button id="toggleView">Toggle View</button>
-        </span>
-        <span>
-          <button id="exportJson">Export JSON</button>
-        </span>
-      </div>
-      <textarea id="jsonOutput" placeholder="HSV filter values in JSON format..."></textarea>
-    </div>
     <div id="imageGrid" class="image-grid"></div>
     <script src="https://cdn.jsdelivr.net/npm/nouislider/distribute/nouislider.min.js"></script>
     <script type="module" src="script.js"></script>
