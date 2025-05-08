@@ -1,3 +1,11 @@
+import { WorkerPool } from './workerPool.js';
+const pool = new WorkerPool('filterWorker.js', 12); // adjust pool size if needed
+
+window.addEventListener('beforeunload', () => {
+  pool.terminate();
+});
+
+
 // === Element References ===
 const imageInput = document.getElementById('imageInput');
 const jsonInput = document.getElementById('jsonInput');
@@ -85,6 +93,44 @@ function rgbToHsv(r, g, b) {
 }
 
 async function applyFilter(canvas, ctx, img) {
+  const [hMin, hMax] = hueSlider.noUiSlider.get().map(Number);
+  const [sMin, sMax] = satSlider.noUiSlider.get().map(Number);
+  const [vMin, vMax] = valSlider.noUiSlider.get().map(Number);
+  const [cropLeft, cropRight] = cropLRSlider.noUiSlider.get().map(Number);
+  const [cropTop, cropBottom] = cropTBSlider.noUiSlider.get().map(Number);
+
+  const xStart = Math.floor(img.width * cropLeft / 100);
+  const xEnd = Math.floor(img.width * cropRight / 100);
+  const yStart = Math.floor(img.height * cropTop / 100);
+  const yEnd = Math.floor(img.height * cropBottom / 100);
+  const cropWidth = xEnd - xStart;
+  const cropHeight = yEnd - yStart;
+  const scale = 300 / Math.max(cropWidth, cropHeight);
+
+  canvas.width = cropWidth * scale;
+  canvas.height = cropHeight * scale;
+
+  ctx.drawImage(img, xStart, yStart, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+  let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  const originalData = new Uint8ClampedArray(imageData.data);
+  const bufferCopy = new Uint8ClampedArray(originalData).buffer;
+
+  const result = await pool.runTask({
+    data: bufferCopy,
+    width: canvas.width,
+    height: canvas.height,
+    hMin, hMax, sMin, sMax, vMin, vMax,
+    hueInvert: hueInvert.checked,
+    satInvert: satInvert.checked,
+    valInvert: valInvert.checked
+  });
+
+  imageData.data.set(new Uint8ClampedArray(result.data));
+  ctx.putImageData(imageData, 0, 0);
+}
+
+async function applyFilter2(canvas, ctx, img) {
   const [hMin, hMax] = hueSlider.noUiSlider.get().map(Number);
   const [sMin, sMax] = satSlider.noUiSlider.get().map(Number);
   const [vMin, vMax] = valSlider.noUiSlider.get().map(Number);
@@ -220,7 +266,7 @@ async function onSlidersUpdate() {
       if (img) await applyFilter(canvas, ctx, img);
     })
   );
-  
+
 }
 
 [hueSlider, satSlider, valSlider, cropLRSlider, cropTBSlider].forEach(sl => {
