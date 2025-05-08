@@ -9,6 +9,10 @@ const exportJsonBtn = document.getElementById('exportJson');
 const hueSlider = document.getElementById('hueSlider');
 const satSlider = document.getElementById('satSlider');
 const valSlider = document.getElementById('valSlider');
+
+const hueInvert = document.getElementById('hueInvert');
+const satInvert = document.getElementById('satInvert');
+const valInvert = document.getElementById('valInvert');
 const cropLRSlider = document.getElementById('cropLRSlider');
 const cropTBSlider = document.getElementById('cropTBSlider');
 
@@ -80,7 +84,7 @@ function rgbToHsv(r, g, b) {
   return [h * 360, (max === 0 ? 0 : d / max) * 100, max * 100];
 }
 
-function applyFilter(canvas, ctx, img) {
+async function applyFilter(canvas, ctx, img) {
   const [hMin, hMax] = hueSlider.noUiSlider.get().map(Number);
   const [sMin, sMax] = satSlider.noUiSlider.get().map(Number);
   const [vMin, vMax] = valSlider.noUiSlider.get().map(Number);
@@ -101,27 +105,34 @@ function applyFilter(canvas, ctx, img) {
   ctx.drawImage(img, xStart, yStart, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
+
   for (let i = 0; i < data.length; i += 4) {
     const [h, s, v] = rgbToHsv(data[i], data[i + 1], data[i + 2]);
-    if (h < hMin || h > hMax || s < sMin || s > sMax || v < vMin || v > vMax) {
+
+    const hPass = hueInvert.checked ? (h < hMin || h > hMax) : (h >= hMin && h <= hMax);
+    const sPass = satInvert.checked ? (s < sMin || s > sMax) : (s >= sMin && s <= sMax);
+    const vPass = valInvert.checked ? (v < vMin || v > vMax) : (v >= vMin && v <= vMax);
+
+    if (!(hPass && sPass && vPass)) {
       data[i + 3] = 0;
     }
+
+    ctx.putImageData(imageData, 0, 0);
   }
-  ctx.putImageData(imageData, 0, 0);
 }
 
 function renderImage(file) {
   const reader = new FileReader();
   reader.onload = e => {
     const img = new Image();
-    img.onload = () => {
+    img.onload = async () => {
       const container = document.createElement('div');
       const canvas = document.createElement('canvas');
       canvas.dataset.source = img.src;
       container.appendChild(canvas);
 
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      applyFilter(canvas, ctx, img);
+      await applyFilter(canvas, ctx, img);
 
       if (isListView) {
         const input = document.createElement('input');
@@ -185,10 +196,10 @@ function renderImage(file) {
         }
       });
 
-      canvas.addEventListener('mouseleave', () => {
+      canvas.addEventListener('mouseleave', async () => {
         const ctx = canvas.getContext('2d');
         const img = imageCache.get(canvas.dataset.source);
-        if (img) applyFilter(canvas, ctx, img);
+        if (img) await applyFilter(canvas, ctx, img);
       });
 
       imageCache.set(img.src, img);
@@ -198,17 +209,29 @@ function renderImage(file) {
   reader.readAsDataURL(file);
 }
 
-function onSlidersUpdate() {
+async function onSlidersUpdate() {
   updateJSONOutput();
-  Array.from(imageGrid.querySelectorAll('canvas')).forEach(canvas => {
-    const ctx = canvas.getContext('2d');
-    const img = imageCache.get(canvas.dataset.source);
-    if (img) applyFilter(canvas, ctx, img);
-  });
+  const canvases = Array.from(imageGrid.querySelectorAll('canvas'));
+
+  await Promise.all(
+    canvases.map(async canvas => {
+      const ctx = canvas.getContext('2d');
+      const img = imageCache.get(canvas.dataset.source);
+      if (img) await applyFilter(canvas, ctx, img);
+    })
+  );
+  
 }
 
 [hueSlider, satSlider, valSlider, cropLRSlider, cropTBSlider].forEach(sl => {
   sl.noUiSlider.on('update', () => {
+    clearTimeout(window.sliderTimer);
+    window.sliderTimer = setTimeout(onSlidersUpdate, 200);
+  });
+});
+
+[hueInvert, satInvert, valInvert].forEach(cb => {
+  cb.addEventListener('change', () => {
     clearTimeout(window.sliderTimer);
     window.sliderTimer = setTimeout(onSlidersUpdate, 200);
   });
