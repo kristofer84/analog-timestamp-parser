@@ -101,23 +101,44 @@ async function applyFilter(canvas, ctx, img) {
   const [cropLeft, cropRight] = cropLRSlider.noUiSlider.get().map(Number);
   const [cropTop, cropBottom] = cropTBSlider.noUiSlider.get().map(Number);
 
-  const xStart = Math.floor(img.width * cropLeft / 100);
-  const xEnd = Math.floor(img.width * cropRight / 100);
-  const yStart = Math.floor(img.height * cropTop / 100);
-  const yEnd = Math.floor(img.height * cropBottom / 100);
+  const offCanvas = document.createElement('canvas');
+  const offCtx = offCanvas.getContext('2d');
+
+  if (img.height > img.width) {
+    offCanvas.width = img.height;
+    offCanvas.height = img.width;
+    offCtx.save();
+    offCtx.translate(offCanvas.width / 2, offCanvas.height / 2);
+    offCtx.rotate(Math.PI / 2);
+    offCtx.drawImage(img, -img.width / 2, -img.height / 2);
+    offCtx.restore();
+  } else {
+    offCanvas.width = img.width;
+    offCanvas.height = img.height;
+    offCtx.drawImage(img, 0, 0);
+  }
+
+  const rotatedImg = offCanvas;
+
+  // const rotatedImg = new Image();
+  // rotatedImg.src = offCanvas.toDataURL();
+  // await new Promise(resolve => rotatedImg.onload = resolve);
+
+  const xStart = Math.floor(rotatedImg.width * cropLeft / 100);
+  const xEnd = Math.floor(rotatedImg.width * cropRight / 100);
+  const yStart = Math.floor(rotatedImg.height * cropTop / 100);
+  const yEnd = Math.floor(rotatedImg.height * cropBottom / 100);
   const cropWidth = xEnd - xStart;
   const cropHeight = yEnd - yStart;
   const scale = 300 / Math.max(cropWidth, cropHeight);
 
   canvas.width = cropWidth * scale;
   canvas.height = cropHeight * scale;
-  
-  ctx.drawImage(img, xStart, yStart, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
 
-  let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(rotatedImg, xStart, yStart, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
 
-  const originalData = new Uint8ClampedArray(imageData.data);
-  const bufferCopy = new Uint8ClampedArray(originalData).buffer;
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const bufferCopy = new Uint8ClampedArray(imageData.data).buffer;
 
   const result = await pool.runTask({
     data: bufferCopy,
@@ -133,42 +154,7 @@ async function applyFilter(canvas, ctx, img) {
   ctx.putImageData(imageData, 0, 0);
 }
 
-async function applyFilter2(canvas, ctx, img) {
-  const [hMin, hMax] = hueSlider.noUiSlider.get().map(Number);
-  const [sMin, sMax] = satSlider.noUiSlider.get().map(Number);
-  const [vMin, vMax] = valSlider.noUiSlider.get().map(Number);
-  const [cropLeft, cropRight] = cropLRSlider.noUiSlider.get().map(Number);
-  const [cropTop, cropBottom] = cropTBSlider.noUiSlider.get().map(Number);
-
-  const xStart = Math.floor(img.width * cropLeft / 100);
-  const xEnd = Math.floor(img.width * cropRight / 100);
-  const yStart = Math.floor(img.height * cropTop / 100);
-  const yEnd = Math.floor(img.height * cropBottom / 100);
-  const cropWidth = xEnd - xStart;
-  const cropHeight = yEnd - yStart;
-  const scale = 300 / Math.max(cropWidth, cropHeight);
-
-  canvas.width = cropWidth * scale;
-  canvas.height = cropHeight * scale;
-
-  ctx.drawImage(img, xStart, yStart, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-
-  for (let i = 0; i < data.length; i += 4) {
-    const [h, s, v] = rgbToHsv(data[i], data[i + 1], data[i + 2]);
-
-    const hPass = hueInvert.checked ? (h < hMin || h > hMax) : (h >= hMin && h <= hMax);
-    const sPass = satInvert.checked ? (s < sMin || s > sMax) : (s >= sMin && s <= sMax);
-    const vPass = valInvert.checked ? (v < vMin || v > vMax) : (v >= vMin && v <= vMax);
-
-    if (!(hPass && sPass && vPass)) {
-      data[i + 3] = 0;
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-  }
-}
+let prevValue = "";
 
 function renderImage(file) {
   const reader = new FileReader();
@@ -176,8 +162,6 @@ function renderImage(file) {
     const img = new Image();
     img.onload = async () => {
       const container = document.createElement('div');
-      if (isListView)
-        container.classList.add('image-container');
       const canvas = document.createElement('canvas');
       canvas.dataset.source = img.src;
       container.appendChild(canvas);
@@ -198,6 +182,7 @@ function renderImage(file) {
         input.value = date ? formatDisplay(date.replace(/-/g, '')) : '';
 
         input.addEventListener('focus', e => {
+        if (e.target.value =="" ) e.target.value = prevValue; 
           e.target.value = unformatDisplay(e.target.value);
           e.target.select();
         });
@@ -211,6 +196,7 @@ function renderImage(file) {
           if (/^\d{8}$/.test(val)) {
             input.value = formatDisplay(val);
             metadataMap[file.name] = { ...metadataMap[file.name], date: input.value, dirty: true };
+            prevValue = val;
           }
         });
         container.appendChild(input);
@@ -221,32 +207,50 @@ function renderImage(file) {
       canvas.addEventListener('mouseenter', () => {
         const tempCtx = canvas.getContext('2d');
         const hoverImg = imageCache.get(canvas.dataset.source);
-        if (hoverImg) {
-          const [cropLeft, cropRight] = cropLRSlider.noUiSlider.get().map(Number);
-          const [cropTop, cropBottom] = cropTBSlider.noUiSlider.get().map(Number);
-          const xStart = Math.floor(hoverImg.width * cropLeft / 100);
-          const xEnd = Math.floor(hoverImg.width * cropRight / 100);
-          const yStart = Math.floor(hoverImg.height * cropTop / 100);
-          const yEnd = Math.floor(hoverImg.height * cropBottom / 100);
-          const cropWidth = xEnd - xStart;
-          const cropHeight = yEnd - yStart;
-          const scale = 300 / Math.max(cropWidth, cropHeight);
-          canvas.width = cropWidth * scale;
-          canvas.height = cropHeight * scale;
+        if (!hoverImg) return;
 
-          if (hoverImg.height > hoverImg.width) {
-            canvas.width = cropHeight * scale;
-            canvas.height = cropWidth * scale;
-            tempCtx.save();
-            tempCtx.translate(canvas.width / 2, canvas.height / 2);
-            tempCtx.rotate(Math.PI / 2);
-            tempCtx.translate(-canvas.height / 2, -canvas.width / 2);
-            tempCtx.drawImage(hoverImg, xStart, yStart, cropWidth, cropHeight, 0, 0, canvas.height, canvas.width);
-            tempCtx.restore();
-          } else {
-            tempCtx.drawImage(hoverImg, xStart, yStart, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
-          }
+        const [cropLeft, cropRight] = cropLRSlider.noUiSlider.get().map(Number);
+        const [cropTop, cropBottom] = cropTBSlider.noUiSlider.get().map(Number);
+
+        const offCanvas = document.createElement('canvas');
+        const offCtx = offCanvas.getContext('2d');
+
+        let rotatedWidth, rotatedHeight;
+
+        if (hoverImg.height > hoverImg.width) {
+          rotatedWidth = hoverImg.height;
+          rotatedHeight = hoverImg.width;
+          offCanvas.width = rotatedWidth;
+          offCanvas.height = rotatedHeight;
+          offCtx.save();
+          offCtx.translate(rotatedWidth / 2, rotatedHeight / 2);
+          offCtx.rotate(Math.PI / 2);
+          offCtx.drawImage(hoverImg, -hoverImg.width / 2, -hoverImg.height / 2);
+          offCtx.restore();
+        } else {
+          rotatedWidth = hoverImg.width;
+          rotatedHeight = hoverImg.height;
+          offCanvas.width = rotatedWidth;
+          offCanvas.height = rotatedHeight;
+          offCtx.drawImage(hoverImg, 0, 0);
         }
+
+        const xStart = Math.floor(rotatedWidth * cropLeft / 100);
+        const xEnd = Math.floor(rotatedWidth * cropRight / 100);
+        const yStart = Math.floor(rotatedHeight * cropTop / 100);
+        const yEnd = Math.floor(rotatedHeight * cropBottom / 100);
+        const cropWidth = xEnd - xStart;
+        const cropHeight = yEnd - yStart;
+        const scale = 300 / Math.max(cropWidth, cropHeight);
+
+        canvas.width = cropWidth * scale;
+        canvas.height = cropHeight * scale;
+
+        tempCtx.drawImage(
+          offCanvas,
+          xStart, yStart, cropWidth, cropHeight,
+          0, 0, canvas.width, canvas.height
+        );
       });
 
       canvas.addEventListener('mouseleave', async () => {
@@ -323,6 +327,9 @@ toggleViewBtn.addEventListener('click', () => {
   imageGrid.className = isListView ? 'image-list' : 'image-grid';
   if (imageInput.files.length > 0) {
     imageGrid.innerHTML = '';
+    if (isListView)
+      imageGrid.classList.add('image-container');
+
     Array.from(imageInput.files).forEach((file, i) => setTimeout(() => renderImage(file), i * 20));
   }
 });
@@ -356,6 +363,9 @@ jsonInput.addEventListener('change', e => {
 imageInput.addEventListener('change', e => {
   if (e.target.files.length > 0) {
     imageGrid.innerHTML = '';
+    if (isListView)
+      imageGrid.classList.add('image-container');
+
     Array.from(e.target.files).forEach((file, i) => setTimeout(() => renderImage(file), i * 20));
     updateJSONOutput();
   }

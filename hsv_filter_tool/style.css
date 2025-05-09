@@ -83,7 +83,7 @@ div[fc] {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 20px;
 }
 
 canvas {
@@ -92,26 +92,32 @@ canvas {
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
 }
 
-.image-container {
+.image-list.image-container > div {
   display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr auto;
+  align-items: center;
   /* width: 700px; */
 }
 
 .image-container canvas {
-  grid-row: 1 / span 2;
-  grid-column: 1;
+  grid-column: 1 / span 2;
+  grid-row: 1;
 }
 
 .image-container input {
   grid-column: 2;
   grid-row: 2;
+  margin: 5px;
 }
 
 .image-container span {
-  grid-column: 2;
-  grid-row: 1;
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 600;
+  grid-column: 1;
+  grid-row: 2;
+  margin: 5px;
 }
 /* 
 .image-grid > div,
@@ -136,6 +142,7 @@ input[type="text"] {
   font-size: 14px;
   padding: 4px;
   width: 100px;
+  height: 26px;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
