@@ -8,6 +8,10 @@ import sys
 import argparse
 import json
 
+def load_config(config_path):
+    with open(config_path, "r") as f:
+        return json.load(f)
+
 def extract_candidate_numbers(text):
     tokens = re.findall(r'\d{1,2}', text)
     for i in range(len(tokens) - 2):
@@ -22,7 +26,7 @@ def extract_candidate_numbers(text):
 def run_ocr_on_image(img):
     return pytesseract.image_to_string(
         img,
-        config='--psm 6 -l 7seg -c tessedit_char_whitelist=0123456789 '
+        config="--psm 6 -l 7seg -c tessedit_char_whitelist='0123456789 '"
     )
 
 def binarize(img):
@@ -34,10 +38,19 @@ def binarize(img):
         2
     )
 
-def isolate_color_and_crop(img_bgr):
-    h_range = (int(267 / 360 * 179), int(345 / 360 * 179))
-    s_range = (int(3 / 100 * 255), int(100 / 100 * 255))
-    v_range = (int(12 / 100 * 255), int(100 / 100 * 255))
+def isolate_color_and_crop(img_bgr, config):
+    h_range = (
+        int(config["hue_range"]["min"] / 360 * 179),
+        int(config["hue_range"]["max"] / 360 * 179),
+    )
+    s_range = (
+        int(config["saturation_range"]["min"] / 100 * 255),
+        int(config["saturation_range"]["max"] / 100 * 255),
+    )
+    v_range = (
+        int(config["value_range"]["min"] / 100 * 255),
+        int(config["value_range"]["max"] / 100 * 255),
+    )
 
     hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
     lower = np.array([h_range[0], s_range[0], v_range[0]], dtype=np.uint8)
@@ -48,19 +61,21 @@ def isolate_color_and_crop(img_bgr):
     gray = cv2.cvtColor(filtered, cv2.COLOR_BGR2GRAY)
 
     h, w = gray.shape
-    left = int(0.74 * w)
-    right = int(0.96 * w)
-    top = int(0.84 * h)
-    bottom = int(0.97 * h)
+    left = int(config["crop"]["left"] / 100 * w)
+    right = int(config["crop"]["right"] / 100 * w)
+    top = int(config["crop"]["top"] / 100 * h)
+    bottom = int(config["crop"]["bottom"] / 100 * h)
     cropped = gray[top:bottom, left:right]
 
     return cropped, mask, gray
 
-def extract_date(image_path, debug=False, debug_dir=None):
+def extract_date(image_path, config, debug=False, debug_dir=None):
     img_color = cv2.imread(str(image_path))
+    if img_color.shape[0] > img_color.shape[1]:
+        img_color = cv2.rotate(img_color, cv2.ROTATE_90_CLOCKWISE)
     img_name = Path(image_path).name
 
-    roi, mask, filtered_gray = isolate_color_and_crop(img_color)
+    roi, mask, filtered_gray = isolate_color_and_crop(img_color, config)
 
     if debug and debug_dir:
         cv2.imwrite(debug_dir / f"{img_name}_mask.jpg", mask)
@@ -89,6 +104,7 @@ def extract_date(image_path, debug=False, debug_dir=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("folder", help="Folder containing images")
+    parser.add_argument("--config", default="config.json", help="Path to config file")
     parser.add_argument("--debug", action="store_true", help="Save debug output images")
     args = parser.parse_args()
 
@@ -96,6 +112,8 @@ def main():
     if not folder.exists() or not folder.is_dir():
         print(f"Invalid folder: {folder}")
         sys.exit(1)
+
+    config = load_config(args.config)
 
     debug_dir = Path("debug_output") if args.debug else None
     if debug_dir:
@@ -110,7 +128,7 @@ def main():
 
     results = []
     for img_path in image_files:
-        date = extract_date(img_path, debug=args.debug, debug_dir=debug_dir)
+        date = extract_date(img_path, config, debug=args.debug, debug_dir=debug_dir)
         results.append({
             "filename": img_path.name,
             "date": date
