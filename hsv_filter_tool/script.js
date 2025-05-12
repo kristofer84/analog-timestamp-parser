@@ -182,7 +182,7 @@ function renderImage(file) {
         input.value = date ? formatDisplay(date.replace(/-/g, '')) : '';
 
         input.addEventListener('focus', e => {
-        if (e.target.value =="" ) e.target.value = prevValue; 
+          if (e.target.value == "") e.target.value = prevValue;
           e.target.value = unformatDisplay(e.target.value);
           e.target.select();
         });
@@ -196,8 +196,9 @@ function renderImage(file) {
           if (/^\d{8}$/.test(val)) {
             input.value = formatDisplay(val);
             metadataMap[file.name] = { ...metadataMap[file.name], date: input.value, dirty: true };
-            prevValue = val;
           }
+
+          prevValue = val;
         });
         container.appendChild(input);
       }
